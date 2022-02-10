@@ -10,17 +10,14 @@ class BalanceOutput extends Component {
     }
 
     return (
-      <div className='output'>
+      <div className="output">
         <p>
           Total Debit: {this.props.totalDebit} Total Credit: {this.props.totalCredit}
           <br />
-          Balance from account {this.props.userInput.startAccount || '*'}
-          {' '}
-          to {this.props.userInput.endAccount || '*'}
-          {' '}
-          from period {utils.dateToString(this.props.userInput.startPeriod)}
-          {' '}
-          to {utils.dateToString(this.props.userInput.endPeriod)}
+          Balance from account {this.props.userInput.startAccount || '*'} to{' '}
+          {this.props.userInput.endAccount || '*'} from period{' '}
+          {utils.dateToString(this.props.userInput.startPeriod)} to{' '}
+          {utils.dateToString(this.props.userInput.endPeriod)}
         </p>
         {this.props.userInput.format === 'CSV' ? (
           <pre>{utils.toCSV(this.props.balance)}</pre>
@@ -61,7 +58,7 @@ BalanceOutput.propTypes = {
       DESCRIPTION: PropTypes.string.isRequired,
       DEBIT: PropTypes.number.isRequired,
       CREDIT: PropTypes.number.isRequired,
-      BALANCE: PropTypes.number.isRequired
+      BALANCE: PropTypes.number.isRequired,
     })
   ).isRequired,
   totalCredit: PropTypes.number.isRequired,
@@ -71,15 +68,38 @@ BalanceOutput.propTypes = {
     endAccount: PropTypes.number,
     startPeriod: PropTypes.date,
     endPeriod: PropTypes.date,
-    format: PropTypes.string
-  }).isRequired
+    format: PropTypes.string,
+  }).isRequired,
 };
 
-export default connect(state => {
+export default connect((state) => {
   let balance = [];
+  /* START OF THE CUSTOM CODE*/
 
-  /* YOUR CODE GOES HERE */
+  const accounts = state.accounts;
+  const journals = state.journalEntries;
+  const userInput = state.userInput;
+  console.log(userInput);
+  const filterdJornuals = journals.filter(
+    (journal) =>
+      utils.isAccountBetween(journal.ACCOUNT, userInput.startAccount, userInput.endAccount) &&
+      utils.isDateBetween(journal.PERIOD, userInput.startPeriod, userInput.endPeriod)
+  );
+  const mxied_data = filterdJornuals.map((journal) => {
+    const description = accounts.find((account) => account.ACCOUNT === journal.ACCOUNT);
+    if (!description) return {};
+    return {
+      ACCOUNT: journal.ACCOUNT,
+      DESCRIPTION: description.LABEL,
+      DEBIT: journal.DEBIT,
+      CREDIT: journal.CREDIT,
+      BALANCE: journal.DEBIT - journal.CREDIT,
+    };
+  });
 
+  balance = utils.combineObj(mxied_data);
+  console.log(balance);
+  /* END OF THE CUSTOM CODE */
   const totalCredit = balance.reduce((acc, entry) => acc + entry.CREDIT, 0);
   const totalDebit = balance.reduce((acc, entry) => acc + entry.DEBIT, 0);
 
@@ -87,6 +107,6 @@ export default connect(state => {
     balance,
     totalCredit,
     totalDebit,
-    userInput: state.userInput
+    userInput: state.userInput,
   };
 })(BalanceOutput);
