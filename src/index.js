@@ -7,18 +7,7 @@ import reducers from './reducers';
 import App from './components/App';
 import './index.css';
 
-const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
-
-let store = createStoreWithMiddleware(
-  reducers,
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-);
-
-// let store = createStore(
-//   reducers,
-//   applyMiddleware(thunk),
-
-// );
+let store = createStore(reducers, applyMiddleware(thunk));
 
 ReactDOM.render(
   <Provider store={store}>
